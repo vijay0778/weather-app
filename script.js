@@ -2,78 +2,66 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM elements
     const cityInput = document.getElementById('city-input');
     const searchBtn = document.getElementById('search-btn');
-    const locationBtn = document.querySelector('.location-btn');
-    const themeBtn = document.querySelector('.theme-btn');
     const suggestionsContainer = document.getElementById('suggestions');
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
     const errorMessage = document.getElementById('error-message');
     const retryBtn = document.getElementById('retry-btn');
     const weatherContent = document.getElementById('weather-content');
-    const moodText = document.getElementById('mood-text');
-    const gradientBg = document.querySelector('.gradient-bg');
-    
-    // Theme modal elements
-    const themeModal = document.getElementById('theme-modal');
-    const closeTheme = document.getElementById('close-theme');
-    const themeOptions = document.querySelectorAll('.theme-option');
+    const backgroundGradient = document.querySelector('.background-gradient');
     
     // Weather elements
     const cityName = document.getElementById('city-name');
-    const currentDate = document.getElementById('current-date');
-    const weatherEmoji = document.getElementById('weather-emoji');
-    const temperature = document.getElementById('temperature');
-    const weatherDescription = document.getElementById('weather-description');
+    const countryName = document.getElementById('country-name');
+    const currentTemp = document.getElementById('current-temp');
+    const weatherCondition = document.getElementById('weather-condition');
     const feelsLike = document.getElementById('feels-like');
-    const tempHigh = document.getElementById('temp-high');
-    const tempLow = document.getElementById('temp-low');
+    const weatherIconMain = document.getElementById('weather-icon-main');
     const windSpeed = document.getElementById('wind-speed');
     const humidity = document.getElementById('humidity');
-    const visibility = document.getElementById('visibility');
     const pressure = document.getElementById('pressure');
+    const visibility = document.getElementById('visibility');
+    const sunrise = document.getElementById('sunrise');
+    const sunset = document.getElementById('sunset');
     
     // Forecast elements
     const hourlyContainer = document.getElementById('hourly-container');
     const dailyContainer = document.getElementById('daily-container');
     
-    // Alert elements
-    const weatherAlerts = document.getElementById('weather-alerts');
-    const alertContent = document.getElementById('alert-content');
-    
     // App state
     let currentCity = '';
-    let currentUnits = 'metric';
-    let currentTheme = 'sunny';
+    let currentUnits = 'imperial'; // Using imperial for Fahrenheit
     let searchTimeout;
     
     // API key - Replace with your actual API key
     const API_KEY = 'YOUR_API_KEY';
     
-    // Weather emojis and moods
-    const weatherEmojis = {
-        'clear': { day: '☀️', night: '🌙', mood: 'Feeling Sunny!' },
-        'clouds': { day: '⛅', night: '☁️', mood: 'Cloudy Vibes!' },
-        'rain': { day: '🌧️', night: '🌧️', mood: 'Rainy Day!' },
-        'drizzle': { day: '🌦️', night: '🌦️', mood: 'Drizzly Weather!' },
-        'thunderstorm': { day: '⛈️', night: '⛈️', mood: 'Stormy Ahead!' },
-        'snow': { day: '❄️', night: '🌨️', mood: 'Snowy Wonderland!' },
-        'mist': { day: '🌫️', night: '🌫️', mood: 'Misty Morning!' },
-        'fog': { day: '🌫️', night: '🌫️', mood: 'Foggy Weather!' },
-        'haze': { day: '🌤️', night: '🌤️', mood: 'Hazy Day!' },
-        'dust': { day: '🌪️', night: '🌪️', mood: 'Dusty Winds!' },
-        'sand': { day: '🏜️', night: '🏜️', mood: 'Sandy Weather!' },
-        'ash': { day: '🌋', night: '🌋', mood: 'Ashy Skies!' },
-        'squall': { day: '💨', night: '💨', mood: 'Windy Squall!' },
-        'tornado': { day: '🌪️', night: '🌪️', mood: 'Tornado Warning!' }
+    // Weather icon mapping
+    const weatherIcons = {
+        '01d': 'fas fa-sun',
+        '01n': 'fas fa-moon',
+        '02d': 'fas fa-cloud-sun',
+        '02n': 'fas fa-cloud-moon',
+        '03d': 'fas fa-cloud',
+        '03n': 'fas fa-cloud',
+        '04d': 'fas fa-cloud',
+        '04n': 'fas fa-cloud',
+        '09d': 'fas fa-cloud-showers-heavy',
+        '09n': 'fas fa-cloud-showers-heavy',
+        '10d': 'fas fa-cloud-sun-rain',
+        '10n': 'fas fa-cloud-moon-rain',
+        '11d': 'fas fa-bolt',
+        '11n': 'fas fa-bolt',
+        '13d': 'fas fa-snowflake',
+        '13n': 'fas fa-snowflake',
+        '50d': 'fas fa-smog',
+        '50n': 'fas fa-smog'
     };
     
     // Initialize app
     init();
     
     function init() {
-        // Load saved settings
-        loadSettings();
-        
         // Set up event listeners
         setupEventListeners();
         
@@ -86,13 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 error => {
                     console.error('Error getting location:', error);
-                    // Default to a fun city
-                    getWeatherData('Miami');
+                    // Default to San Francisco
+                    getWeatherData('San Francisco');
                 }
             );
         } else {
-            // Default to a fun city if geolocation is not supported
-            getWeatherData('Miami');
+            // Default to San Francisco if geolocation is not supported
+            getWeatherData('San Francisco');
         }
     }
     
@@ -131,52 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Click outside to close suggestions
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-wrapper')) {
+            if (!e.target.closest('.search-container')) {
                 suggestionsContainer.style.display = 'none';
-            }
-        });
-        
-        // Location button
-        locationBtn.addEventListener('click', () => {
-            if (navigator.geolocation) {
-                showLoading(true);
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const { latitude, longitude } = position.coords;
-                        getWeatherByCoords(latitude, longitude);
-                    },
-                    error => {
-                        showLoading(false);
-                        showError('Can\'t find your location! Try searching for a city 🗺️');
-                    }
-                );
-            } else {
-                showError('Your browser doesn\'t support location finding! 📍');
-            }
-        });
-        
-        // Theme button
-        themeBtn.addEventListener('click', () => {
-            themeModal.classList.remove('hidden');
-        });
-        
-        closeTheme.addEventListener('click', () => {
-            themeModal.classList.add('hidden');
-        });
-        
-        // Theme options
-        themeOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const theme = option.dataset.theme;
-                applyTheme(theme);
-                themeModal.classList.add('hidden');
-            });
-        });
-        
-        // Click outside to close theme modal
-        themeModal.addEventListener('click', (e) => {
-            if (e.target === themeModal) {
-                themeModal.classList.add('hidden');
             }
         });
         
@@ -208,8 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('City not found');
             }
             
-            const { lat, lon } = geoData[0];
-            currentCity = geoData[0].name;
+            const { lat, lon, name, country } = geoData[0];
+            currentCity = name;
             
             // Then get weather data using coordinates
             const weatherResponse = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${currentUnits}`);
@@ -221,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const weatherData = await weatherResponse.json();
             
             // Display the weather data
-            displayWeatherData(currentCity, weatherData);
+            displayWeatherData(name, country, weatherData);
             
         } catch (error) {
             showError(error.message);
@@ -250,7 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Location not found');
             }
             
-            currentCity = reverseGeoData[0].name;
+            const { name, country } = reverseGeoData[0];
+            currentCity = name;
             
             // Then get weather data using coordinates
             const weatherResponse = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${currentUnits}`);
@@ -262,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const weatherData = await weatherResponse.json();
             
             // Display the weather data
-            displayWeatherData(currentCity, weatherData);
+            displayWeatherData(name, country, weatherData);
             
         } catch (error) {
             showError(error.message);
@@ -294,7 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
             data.forEach(item => {
                 const suggestionItem = document.createElement('div');
                 suggestionItem.className = 'suggestion-item';
-                suggestionItem.textContent = `${item.name}, ${item.state ? item.state + ', ' : ''}${item.country}`;
+                suggestionItem.innerHTML = `
+                    <i class="fas fa-location-dot"></i>
+                    <div>
+                        <div>${item.name}, ${item.state ? item.state + ', ' : ''}${item.country}</div>
+                    </div>
+                `;
                 
                 suggestionItem.addEventListener('click', () => {
                     cityInput.value = item.name;
@@ -314,41 +264,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Display weather data
-    function displayWeatherData(city, data) {
-        // Current weather
+    function displayWeatherData(city, country, data) {
+        // Update location info
         cityName.textContent = city;
-        currentDate.textContent = formatDate(data.current.dt);
+        countryName.textContent = country;
         
-        // Weather emoji and mood
-        const weatherMain = data.current.weather[0].main.toLowerCase();
-        const hour = new Date(data.current.dt * 1000).getHours();
-        const isDayTime = hour >= 6 && hour < 20;
+        // Current weather
+        currentTemp.textContent = Math.round(data.current.temp);
+        weatherCondition.textContent = capitalizeFirstLetter(data.current.weather[0].description);
+        feelsLike.textContent = `Feels like ${Math.round(data.current.feels_like)}°F`;
         
-        let emojiData = weatherEmojis[weatherMain] || { day: '🌤️', night: '🌤️', mood: 'Interesting Weather!' };
-        let emoji = isDayTime ? emojiData.day : emojiData.night;
+        // Weather icon
+        const iconCode = data.current.weather[0].icon;
+        weatherIconMain.className = weatherIcons[iconCode] || 'fas fa-question';
         
-        weatherEmoji.textContent = emoji;
-        moodText.textContent = emojiData.mood;
-        
-        // Temperature and description
-        temperature.textContent = Math.round(data.current.temp);
-        weatherDescription.textContent = capitalizeFirstLetter(data.current.weather[0].description);
-        feelsLike.textContent = Math.round(data.current.feels_like);
-        tempHigh.textContent = Math.round(data.daily[0].temp.max);
-        tempLow.textContent = Math.round(data.daily[0].temp.min);
+        // Update background based on weather
+        updateBackground(data.current.weather[0].main, data.current.dt);
         
         // Weather details
-        windSpeed.textContent = Math.round(data.current.wind_speed * 3.6); // Convert m/s to km/h
-        humidity.textContent = data.current.humidity;
-        visibility.textContent = (data.current.visibility / 1000).toFixed(1);
-        pressure.textContent = data.current.pressure;
+        windSpeed.textContent = `${Math.round(data.current.wind_speed)} mph`;
+        humidity.textContent = `${data.current.humidity}%`;
+        pressure.textContent = `${(data.current.pressure * 0.02953).toFixed(2)} in`; // Convert hPa to inches
+        visibility.textContent = `${(data.current.visibility / 1609.34).toFixed(1)} mi`; // Convert meters to miles
         
-        // Weather alerts
-        if (data.alerts && data.alerts.length > 0) {
-            displayWeatherAlerts(data.alerts);
-        } else {
-            weatherAlerts.classList.add('hidden');
-        }
+        // Sun times
+        sunrise.textContent = formatTime(data.current.sunrise);
+        sunset.textContent = formatTime(data.current.sunset);
         
         // Hourly forecast
         displayHourlyForecast(data.hourly.slice(0, 24));
@@ -358,27 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Show weather content
         weatherContent.classList.remove('hidden');
-        
-        // Add floating animation to weather emoji
-        weatherEmoji.style.animation = 'bounce 2s infinite';
-    }
-    
-    // Display weather alerts
-    function displayWeatherAlerts(alerts) {
-        alertContent.innerHTML = '';
-        
-        alerts.forEach(alert => {
-            const alertElement = document.createElement('div');
-            alertElement.className = 'alert-item';
-            alertElement.innerHTML = `
-                <h4>${alert.event}</h4>
-                <p>${alert.description}</p>
-                <p class="alert-time">From: ${formatDate(alert.start)} To: ${formatDate(alert.end)}</p>
-            `;
-            alertContent.appendChild(alertElement);
-        });
-        
-        weatherAlerts.classList.remove('hidden');
     }
     
     // Display hourly forecast
@@ -387,20 +307,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         hourlyData.forEach(hour => {
             const hourElement = document.createElement('div');
-            hourElement.className = 'hourly-card';
+            hourElement.className = 'hourly-item';
             
-            const weatherMain = hour.weather[0].main.toLowerCase();
-            const hourTime = new Date(hour.dt * 1000).getHours();
-            const isDayTime = hourTime >= 6 && hourTime < 20;
-            
-            let emojiData = weatherEmojis[weatherMain] || { day: '🌤️', night: '🌤️' };
-            let emoji = isDayTime ? emojiData.day : emojiData.night;
+            const iconCode = hour.weather[0].icon;
+            const iconClass = weatherIcons[iconCode] || 'fas fa-question';
             
             hourElement.innerHTML = `
-                <p class="time">${formatTime(hour.dt)}</p>
-                <div class="weather-icon">${emoji}</div>
-                <p class="temp">${Math.round(hour.temp)}°</p>
-                <p class="precip"><i class="fas fa-droplet"></i> ${Math.round(hour.pop * 100)}%</p>
+                <p class="hourly-time">${formatTime(hour.dt)}</p>
+                <i class="${iconClass} hourly-icon"></i>
+                <p class="hourly-temp">${Math.round(hour.temp)}°</p>
+                <p class="hourly-rain"><i class="fas fa-droplet"></i> ${Math.round(hour.pop * 100)}%</p>
             `;
             
             hourlyContainer.appendChild(hourElement);
@@ -413,20 +329,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         dailyData.forEach(day => {
             const dayElement = document.createElement('div');
-            dayElement.className = 'daily-card';
+            dayElement.className = 'daily-item';
             
-            const weatherMain = day.weather[0].main.toLowerCase();
-            let emojiData = weatherEmojis[weatherMain] || { day: '🌤️' };
-            let emoji = emojiData.day;
+            const iconCode = day.weather[0].icon;
+            const iconClass = weatherIcons[iconCode] || 'fas fa-question';
             
             dayElement.innerHTML = `
                 <div class="daily-left">
                     <p class="day-name">${formatDay(day.dt)}</p>
-                    <div class="daily-icon">${emoji}</div>
+                    <i class="${iconClass} daily-icon"></i>
                     <p class="daily-temps">${Math.round(day.temp.max)}° / ${Math.round(day.temp.min)}°</p>
                 </div>
                 <div class="daily-right">
-                    <p class="precip-chance"><i class="fas fa-droplet"></i> ${Math.round(day.pop * 100)}%</p>
+                    <p class="daily-rain"><i class="fas fa-droplet"></i> ${Math.round(day.pop * 100)}%</p>
                 </div>
             `;
             
@@ -434,77 +349,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Apply theme
-    function applyTheme(theme) {
-        currentTheme = theme;
+    // Update background based on weather
+    function updateBackground(weatherMain, timestamp) {
+        const hour = new Date(timestamp * 1000).getHours();
+        const isDayTime = hour >= 6 && hour < 20;
         
-        // Update CSS variables
-        const root = document.documentElement;
+        // Remove all background classes
+        backgroundGradient.classList.remove('sunny-bg', 'cloudy-bg', 'rainy-bg', 'night-bg', 'snowy-bg');
         
-        switch(theme) {
-            case 'sunny':
-                root.style.setProperty('--current-primary', 'var(--sunny-primary)');
-                root.style.setProperty('--current-secondary', 'var(--sunny-secondary)');
-                root.style.setProperty('--current-accent', 'var(--sunny-accent)');
-                break;
-            case 'ocean':
-                root.style.setProperty('--current-primary', 'var(--ocean-primary)');
-                root.style.setProperty('--current-secondary', 'var(--ocean-secondary)');
-                root.style.setProperty('--current-accent', 'var(--ocean-accent)');
-                break;
-            case 'sunset':
-                root.style.setProperty('--current-primary', 'var(--sunset-primary)');
-                root.style.setProperty('--current-secondary', 'var(--sunset-secondary)');
-                root.style.setProperty('--current-accent', 'var(--sunset-accent)');
-                break;
-            case 'night':
-                root.style.setProperty('--current-primary', 'var(--night-primary)');
-                root.style.setProperty('--current-secondary', 'var(--night-secondary)');
-                root.style.setProperty('--current-accent', 'var(--night-accent)');
-                break;
-            case 'forest':
-                root.style.setProperty('--current-primary', 'var(--forest-primary)');
-                root.style.setProperty('--current-secondary', 'var(--forest-secondary)');
-                root.style.setProperty('--current-accent', 'var(--forest-accent)');
-                break;
-            case 'candy':
-                root.style.setProperty('--current-primary', 'var(--candy-primary)');
-                root.style.setProperty('--current-secondary', 'var(--candy-secondary)');
-                root.style.setProperty('--current-accent', 'var(--candy-accent)');
-                break;
+        if (!isDayTime) {
+            backgroundGradient.classList.add('night-bg');
+        } else {
+            switch (weatherMain.toLowerCase()) {
+                case 'clear':
+                    backgroundGradient.classList.add('sunny-bg');
+                    break;
+                case 'clouds':
+                    backgroundGradient.classList.add('cloudy-bg');
+                    break;
+                case 'rain':
+                case 'drizzle':
+                case 'thunderstorm':
+                    backgroundGradient.classList.add('rainy-bg');
+                    break;
+                case 'snow':
+                    backgroundGradient.classList.add('snowy-bg');
+                    break;
+                default:
+                    backgroundGradient.classList.add('sunny-bg');
+            }
         }
-        
-        // Save theme preference
-        localStorage.setItem('weatherTheme', theme);
-        
-        // Restart gradient animation
-        gradientBg.style.animation = 'none';
-        setTimeout(() => {
-            gradientBg.style.animation = 'gradientShift 15s ease infinite';
-        }, 10);
-    }
-    
-    // Format date from timestamp
-    function formatDate(timestamp) {
-        const date = new Date(timestamp * 1000);
-        const today = new Date();
-        
-        if (date.toDateString() === today.toDateString()) {
-            return 'Today';
-        }
-        
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        if (date.toDateString() === tomorrow.toDateString()) {
-            return 'Tomorrow';
-        }
-        
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric'
-        });
     }
     
     // Format time from timestamp
@@ -512,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = new Date(timestamp * 1000);
         return date.toLocaleTimeString('en-US', {
             hour: 'numeric',
+            minute: '2-digit',
             hour12: true
         });
     }
@@ -565,13 +440,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide weather content
     function hideWeatherContent() {
         weatherContent.classList.add('hidden');
-    }
-    
-    // Load settings from localStorage
-    function loadSettings() {
-        const savedTheme = localStorage.getItem('weatherTheme');
-        if (savedTheme) {
-            applyTheme(savedTheme);
-        }
     }
 });
